@@ -237,8 +237,93 @@ function LotionStateMachine(opts: BaseApplicationConfig): Application {
           applyTx(mempoolState, tx, context)
         },
 
-        query(path) {
-          return appState
+        query(request) {
+          if (!request) {
+            return appState
+          } else {
+            // Helper functions
+            let pathInObject = function(obj, path='') {
+              let args = path.split('.')
+              for (var i = 0; i < args.length; i++) {
+                if (!obj.hasOwnProperty(args[i])) {
+                  return false
+                }
+                obj = obj[args[i]]
+              }
+              return true
+            }
+
+            let resolve = function(obj, path='') {
+              let args = path.split('.')
+              var current = obj
+              while(args.length) {
+                if(typeof current !== 'object') return undefined
+                current = current[args.shift()]
+              }
+              return current
+            }
+
+
+            let data = ''
+            if (request.data) {
+              try {
+                data = Buffer.from(request.data, 'base64').toString()
+              }
+              catch (error) {
+                console.log(error)
+              }
+            }
+
+            // if (data=="diff") {
+            //   req.height = (req.height!=0) ? req.height : (height - 1)
+            //   let [err, response] = await to(diffDb.get(req.height))
+            //   if (err) {
+            //     if (err.notFound) {
+            //       return { code: "3", log: 'diff not found' }
+            //     } else {
+            //       return { code: "2", log: 'invalid query: '+err.message }
+            //     }
+            //   } else {
+            //     response = djson.parse(response)
+            //     if (pathInObject(response, req.path)) {
+            //       response = resolve(response, req.path)
+            //     } else {
+            //       req.path = '*'
+            //     }
+            //
+            //     return {
+            //       value: Buffer.from(djson.stringify(response)).toString('base64'),
+            //       height: `${req.height}`,
+            //       code: "0",
+            //       log: `path: '${req.path}', block: ${req.height}, data:${data}`
+            //     }
+            //   }
+            // } else {
+              let response = appState
+              if (pathInObject(appState, request.path)) {
+                response = resolve(appState, request.path)
+              } else {
+                request.path = '*'
+              }
+              return {
+                value: response,
+                code: "0",
+                log: `path: '${request.path}'`
+              }
+              // } catch (err) {
+              //   if (err.notFound) {
+              //     return {
+              //       code: "3",
+              //       log: 'state not found'
+              //     }
+              //   } else {
+              //     return {
+              //       code: "2",
+              //       log: 'invalid query: '+err.message
+              //     }
+              //   }
+              // }
+          }
         },
 
         context() {
