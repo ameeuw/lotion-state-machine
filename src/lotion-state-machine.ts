@@ -250,7 +250,6 @@ function LotionStateMachine(opts: BaseApplicationConfig): Application {
             return appState
           } else {
             let response = await handleQuery(nextState, request, nextContext)
-            console.log(response)
             return response
           }
         },
