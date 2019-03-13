@@ -1,7 +1,5 @@
 node_modules/
 coverage
 example
-tsconfig.json
-src
 test
 .nyc_output
